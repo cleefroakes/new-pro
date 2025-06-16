@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI in Browser: Even or Odd Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #45a049;
+            }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Even or Odd AI Predictor</h1>
+        <p>Enter a number, and the AI will predict if it's even or odd!</p>
+        <input type="number" id="inputNumber" placeholder="Enter a number">
+        <button onclick="predict()">Predict</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+    // Create a simple sequential model
+    const model = tf.sequential();
+    model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: [1] }));
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+    model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });
+
+    // Generate training data
+    const xs = tf.tensor2d(Array.from({ length: 100 }, (_, i) => i), [100, 1]);
+    const ys = tf.tensor2d(Array.from({ length: 100 }, (_, i) => i % 2 === 0 ? 0 : 1), [100, 1]);
+
+    // Train the model
+    async function trainModel() {
+      await model.fit(xs, ys, {
+        epochs: 50,
+        verbose: 0
+      });
+      console.log('Model trained!');
+    }
+
+    trainModel();
+
+    // Predict function
+    async function predict() {
+      const input = parseFloat(document.getElementById('inputNumber').value);
+      if (isNaN(input)) {
+        document.getElementById('result').innerText = 'Please enter a valid number!';
+        return;
+      }
+
+      const prediction = model.predict(tf.tensor2d([input], [1, 1]));
+      const result = (await prediction.data())[0];
+      const output = result < 0.5 ? 'Even' : 'Odd';
+      document.getElementById('result').innerText = `Prediction: ${input} is ${output}`;
+    }
+    </script>
+</body>
+</html>
